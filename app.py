@@ -5,7 +5,7 @@ from functools import lru_cache
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-API_KEY = 8265bd1679663a7ea12ac168da84d2e8
+API_KEY = "6e619125fbd3e4d6764380e158599890"
 
 @st.cache_resource
 def get_session():
