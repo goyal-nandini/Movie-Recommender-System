@@ -359,8 +359,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Header
-st.title("🎬 Movie Recommender System")
 st.markdown("---")
+st.markdown("## 🎬 Movie Recommender System")
 st.markdown("### 🍿 Discover Your Next Favorite Movie")
 
 # Search and Random Section
