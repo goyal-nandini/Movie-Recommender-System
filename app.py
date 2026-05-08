@@ -3,6 +3,7 @@ from pathlib import Path
 import streamlit as st
 import pickle
 import requests
+import random
 from functools import lru_cache
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -10,6 +11,12 @@ from scipy.sparse import load_npz
 
 API_KEY = st.secrets.get("TMDB_API_KEY", os.environ.get("TMDB_API_KEY", ""))
 OMDB_API_KEY = st.secrets.get("OMDB_API_KEY", os.environ.get("OMDB_API_KEY", ""))
+
+# Initialize session state
+if 'selected_movie' not in st.session_state:
+    st.session_state.selected_movie = None
+if 'recommendations' not in st.session_state:
+    st.session_state.recommendations = None
 
 @st.cache_resource
 def get_session():
@@ -249,56 +256,196 @@ movies_titles = movies_df["title"].values
 # Custom CSS
 st.markdown("""
 <style>
-    .main {
-        background-color: #A8DF8E;
+    /* Modern card design */
+    .movie-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+        border-radius: 15px;
+        padding: 15px;
+        margin: 10px 0;
+        border: 1px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     }
-    .stButton > button {
-        background-color: #4D2FB2;
+    .movie-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        border-color: rgba(255,107,107,0.5);
+    }
+
+    /* Search box styling */
+    .stTextInput > div > div > input {
+        background: rgba(255,255,255,0.1);
         color: white;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.3);
+        padding: 10px;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #FF6B6B;
+        box-shadow: 0 0 10px rgba(255,107,107,0.3);
+    }
+
+    /* Button improvements */
+    .stButton > button {
+        background: linear-gradient(135deg, #FF6B6B, #FF8C42);
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
+        padding: 12px 25px;
+        border-radius: 25px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        transition: all 0.3s ease;
+        margin: 5px;
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+    }
+
+    /* Random button special styling */
+    .random-btn > button {
+        background: linear-gradient(135deg, #4D2FB2, #6BCB77);
+    }
+    .random-btn > button:hover {
+        background: linear-gradient(135deg, #6BCB77, #4D2FB2);
+    }
+
+    /* Movie title styling */
+    .movie-title {
+        color: #FFD93D;
+        font-weight: bold;
+        font-size: 14px;
+        margin: 8px 0 5px 0;
+        text-align: center;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+
+    /* Rating and year badges */
+    .movie-meta {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 5px 0;
+    }
+    .rating-badge {
+        background: rgba(255, 107, 107, 0.8);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .year-badge {
+        background: rgba(77, 47, 178, 0.8);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    /* Image styling */
+    img {
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease;
+    }
+    img:hover {
+        transform: scale(1.05);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Input section
-col1, col2, col3 = st.columns([2, 1, 1])
+# Header
+st.title("🎬 Movie Recommender System")
+st.markdown("---")
+st.markdown("### 🍿 Discover Your Next Favorite Movie")
+
+# Search and Random Section
+col1, col2 = st.columns([3, 1])
 
 with col1:
-    user_selected_movie = st.selectbox(
-        "🎥 Select a movie:",
-        movies_titles,
-        help="Choose a movie to get recommendations"
+    # Search box for movie selection
+    search_query = st.text_input(
+        "🔍 Search for a movie:",
+        placeholder="Type movie name...",
+        help="Start typing to find movies"
     )
 
-with col3:
-    recommend_btn = st.button("🎯 Recommend", use_container_width=True)
+    # Filter movies based on search
+    if search_query:
+        filtered_movies = [movie for movie in movies_titles if search_query.lower() in movie.lower()]
+        if filtered_movies:
+            user_selected_movie = st.selectbox(
+                "🎥 Select from results:",
+                filtered_movies[:10],  # Limit to 10 results
+                help="Choose a movie to get recommendations"
+            )
+        else:
+            st.warning("No movies found. Try a different search term.")
+            user_selected_movie = None
+    else:
+        user_selected_movie = None
+
+with col2:
+    # Random recommendation button
+    if st.button("🎲 Random Movie", use_container_width=True, key="random"):
+        user_selected_movie = random.choice(movies_titles)
+        st.session_state.selected_movie = user_selected_movie
+        st.rerun()
+
+# Show selected movie
+if user_selected_movie:
+    st.success(f"Selected: **{user_selected_movie}**")
+
+# Recommendation buttons
+col1, col2, col3 = st.columns([1, 1, 2])
+
+with col1:
+    recommend_btn = st.button("🎯 Get Recommendations", use_container_width=True)
+
+with col2:
+    if st.button("🔄 Clear", use_container_width=True):
+        st.session_state.selected_movie = None
+        st.session_state.recommendations = None
+        st.rerun()
 
 # Recommendations Display
-if recommend_btn:
-    names, posters = recommend(user_selected_movie)
-    
+if recommend_btn and user_selected_movie:
+    with st.spinner("Finding your perfect matches... 🎬"):
+        names, posters = recommend(user_selected_movie)
+        st.session_state.recommendations = (names, posters)
+
+if st.session_state.recommendations:
+    names, posters = st.session_state.recommendations
+
     st.markdown("---")
-    st.markdown("## 🌟 Top 5 Recommendations for You:")
+    st.markdown(f"## 🌟 Top 5 Recommendations for **{user_selected_movie}**")
     st.markdown("")
-    
-    cols = st.columns(5, gap="medium")
+
+    # Display recommendations in a grid
+    cols = st.columns(5, gap="small")
 
     for i in range(len(names)):
         with cols[i]:
-            # Poster with border
-            st.image(posters[i], width=300)
-            
-            # Movie name with styling
+            # Get movie details for enhanced display
+            movie_row = movies_df[movies_df['title'] == names[i]].iloc[0]
+
             st.markdown(f"""
-                <div style="
-                    text-align: center;
-                    padding: 10px;
-                    background: rgba(255, 107, 107, 0.2);
-                    border-radius: 8px;
-                    margin-top: 10px;
-                ">
-                    <p style="color: #FFD93D; font-weight: bold; margin: 0;">
-                        {i+1}. {names[i][:25]}{'...' if len(names[i]) > 25 else ''}
-                    </p>
+                <div class="movie-card">
+                    <img src="{posters[i]}" width="100%" style="border-radius: 10px;">
+                    <div class="movie-title">{i+1}. {names[i][:20]}{'...' if len(names[i]) > 20 else ''}</div>
+                    <div class="movie-meta">
+                        <span class="rating-badge">⭐ {movie_row.get('vote_average', 'N/A')}</span>
+                        <span class="year-badge">📅 {movie_row.get('release_date', 'N/A')[:4] if movie_row.get('release_date') else 'N/A'}</span>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
+
+# Footer
+st.markdown("---")
+st.markdown("💡 **Tip:** Search for movies or click 'Random Movie' to explore!")
+st.markdown("🔒 Your data stays private and secure.")
     
