@@ -323,44 +323,83 @@ st.markdown("""
     .movie-title {
         color: #FFD93D;
         font-weight: bold;
-        font-size: 14px;
-        margin: 8px 0 5px 0;
-        text-align: center;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        font-size: 16px;
+        margin: 12px 0 4px 0;
+        text-align: left;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     }
 
-    /* Rating and year badges */
-    .movie-meta {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin: 5px 0;
+    /* Card layout */
+    .movie-card {
+        width: 100%;
+        min-height: 410px;
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
     }
-    .rating-badge {
-        background: rgba(255, 107, 107, 0.8);
-        color: white;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
+
+    .movie-card:hover {
+        transform: translateY(-5px);
     }
-    .year-badge {
-        background: rgba(77, 47, 178, 0.8);
-        color: white;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
+
+    .poster-image {
+        width: 100%;
+        height: 430px;
+        object-fit: cover;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .movie-name {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 16px;
+        margin-top: 10px;
+        text-align: left;
+        line-height: 1.2;
+    }
+
+    /* Full width page container */
+    .css-1d391kg {
+        max-width: 100%;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+
+    .block-container {
+        padding-top: 1rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        max-width: 100%;
+    }
+
+    .main {
+        align-items: flex-start;
+    }
+
+    .stButton > button {
+        width: 100% !important;
+        display: block;
+    }
+
+    .stTextInput > div > div > input {
+        min-width: 100%;
+    }
+
+    .stSelectbox > div > div > div {
+        min-width: 100%;
     }
 
     /* Image styling */
     img {
-        border-radius: 10px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        border-radius: 16px;
         transition: transform 0.3s ease;
     }
     img:hover {
-        transform: scale(1.05);
+        transform: scale(1.03);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -433,18 +472,12 @@ if st.session_state.recommendations:
 
     for i in range(len(names)):
         with cols[i]:
-            # Get movie details for enhanced display
-            movie_row = movies_df[movies_df['title'] == names[i]].iloc[0]
-
+            movie_name = names[i]
             st.markdown(f"""
                 <div class="movie-card">
-                    <img src="{posters[i]}" width="100%" style="border-radius: 10px;">
-                    <div class="movie-title">{i+1}. {names[i][:20]}{'...' if len(names[i]) > 20 else ''}</div>
-                    <div class="movie-meta">
-                        <span class="rating-badge">⭐ {movie_row.get('vote_average', 'N/A')}</span>
-                        <span class="year-badge">📅 {movie_row.get('release_date', 'N/A')[:4] if movie_row.get('release_date') else 'N/A'}</span>
-                    </div>
+                    <img class="poster-image" src="{posters[i]}" alt="{movie_name}" />
                 </div>
+                <div class="movie-name">{i+1}. {movie_name}</div>
             """, unsafe_allow_html=True)
 
 # Footer
