@@ -4,8 +4,9 @@ import requests
 from functools import lru_cache
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import os
 
-API_KEY = "6e619125fbd3e4d6764380e158599890"
+API_KEY = os.getenv("TMDB_API_KEY")
 
 @st.cache_resource
 def get_session():
