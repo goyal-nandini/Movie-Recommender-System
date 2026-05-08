@@ -9,8 +9,15 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from scipy.sparse import load_npz
 
-API_KEY = st.secrets.get("TMDB_API_KEY", os.environ.get("TMDB_API_KEY", ""))
-OMDB_API_KEY = st.secrets.get("OMDB_API_KEY", os.environ.get("OMDB_API_KEY", ""))
+def get_api_secret(key: str) -> str:
+    """Return secret from Streamlit secrets or environment variables."""
+    try:
+        return st.secrets[key]
+    except Exception:
+        return os.environ.get(key, "")
+
+API_KEY = get_api_secret("TMDB_API_KEY")
+OMDB_API_KEY = get_api_secret("OMDB_API_KEY")
 
 # Initialize session state
 if 'selected_movie' not in st.session_state:
@@ -375,19 +382,15 @@ with col1:
     )
 
     # Filter movies based on search
-    if search_query:
-        filtered_movies = [movie for movie in movies_titles if search_query.lower() in movie.lower()]
-        if filtered_movies:
-            user_selected_movie = st.selectbox(
-                "🎥 Select from results:",
-                filtered_movies[:10],  # Limit to 10 results
-                help="Choose a movie to get recommendations"
-            )
-        else:
-            st.warning("No movies found. Try a different search term.")
-            user_selected_movie = None
-    else:
-        user_selected_movie = None
+    filtered_movies = [movie for movie in movies_titles if search_query.lower() in movie.lower()] if search_query else list(movies_titles)
+    if search_query and not filtered_movies:
+        st.warning("No movies found. Try a different search term.")
+
+    user_selected_movie = st.selectbox(
+        "🎥 Select a movie:",
+        filtered_movies,
+        help="Choose a movie to get recommendations"
+    )
 
 with col2:
     # Random recommendation button
