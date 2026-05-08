@@ -200,10 +200,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🎬 Movie Recommender System")
-st.markdown("---")
-st.markdown("### Find Your Next Favorite Movie 🍿")
-st.markdown("")
+# st.title("🎬 Movie Recommender System")
+# st.markdown("---")
+# st.markdown("### Find Your Next Favorite Movie 🍿")
+# st.markdown("")
 
 @st.cache_resource
 def load_data():
