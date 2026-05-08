@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import streamlit as st
 import pickle
 import requests
@@ -200,8 +201,19 @@ st.markdown("")
 @st.cache_resource
 def load_data():
     """Load pickle files once and cache them"""
-    movies_df = pickle.load(open("movies_df.pkl", "rb"))
-    similarity_sparse = load_npz("similarity_mat.npz")
+    for filepath in ["movies_df.pkl", "similarity_mat.npz"]:
+        if not Path(filepath).exists():
+            raise FileNotFoundError(
+                f"Required deployment file is missing: {filepath}. "
+                "Make sure it is tracked in GitHub and present in the repo root."
+            )
+
+    try:
+        movies_df = pickle.load(open("movies_df.pkl", "rb"))
+        similarity_sparse = load_npz("similarity_mat.npz")
+    except Exception as e:
+        raise RuntimeError(f"Failed to load deployment data files: {e}") from e
+
     return movies_df, similarity_sparse
 
 movies_df, similarity_df = load_data()
